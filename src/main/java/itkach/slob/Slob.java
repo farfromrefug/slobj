@@ -1192,7 +1192,7 @@ public final class Slob extends AbstractList<Slob.Blob> {
         E peek();
     }
 
-    static final class MatchIterator implements PeekableIterator<Blob> {
+    static public final class MatchIterator implements PeekableIterator<Blob> {
 
         private Set<String>                 seen = new HashSet<>();
         private List<MergeBufferItem>       mergeBuffer;
@@ -1301,6 +1301,12 @@ public final class Slob extends AbstractList<Slob.Blob> {
             return mergeBuffer.get(0).blob;
         }
 
+        @Override
+        public boolean hasNext() {
+            return mergeBuffer.size() > 0;
+        }
+
+        @Override
         public Blob next() {
             try {
                 Collections.sort(mergeBuffer, comparator);
@@ -1312,10 +1318,6 @@ public final class Slob extends AbstractList<Slob.Blob> {
             Blob blob = result.blob;
             updateMergeBuffer(blob.owner);
             return blob;
-        }
-
-        public boolean hasNext() {
-            return mergeBuffer.size() > 0;
         }
 
         public void remove() {
