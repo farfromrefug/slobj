@@ -1068,36 +1068,36 @@ public final class Slob extends AbstractList<Slob.Blob> {
 
         @Override
         public int compare(Keyed o1, Keyed o2) {
-            CollationKey ck1 = getCollationKey(o1.key);
-            CollationKey ck2 = getCollationKey(o2.key);
+            String k1 = o1.key;
+            String k2 = o2.key;
 
-            byte[] key1 = ck1.toByteArray();
-            byte[] key2 = ck2.toByteArray();
-
-            int key, targetKey, result = 0, i = 0;
-            while (true) {
-                key = key1[i] & 0xFF;
-                targetKey = key2[i] & 0xFF;
-                if (targetKey == 0) {
-                    break;
-                }
-                if (key == 0) {
-                    result = -1;
-                    break;
-                }
-                if (key < targetKey) {
-                    result = -1;
-                    break;
-                }
-                if (key > targetKey) {
-                    result = 1;
-                    break;
-                }
-                i++;
+            // exact equality -> equal
+            if (k1.equals(k2)) {
+                return 0;
             }
-            return result;
+
+            // Use codepoint-aware prefix extraction to avoid splitting surrogate pairs.
+            int k2CodePoints = k2.codePointCount(0, k2.length());
+            int k1CodePoints = k1.codePointCount(0, k1.length());
+
+            synchronized (collator) {
+                // If candidate is long enough, compare its initial segment with the prefix
+                if (k1CodePoints >= k2CodePoints) {
+                    int endIndex = k1.offsetByCodePoints(0, k2CodePoints);
+                    String k1Prefix = k1.substring(0, endIndex);
+                    if (collator.compare(k1Prefix, k2) == 0) {
+                        // treat as a prefix match
+                        return 0;
+                    }
+                }
+
+                // Otherwise, fall back to normal ordering
+                return collator.compare(k1, k2);
+            }
         }
     }
+
+
 
     private static Map<String, CollationKey> newCollationKeyCache() {
         return Collections.synchronizedMap(new LruCache<String, CollationKey>(4096));
