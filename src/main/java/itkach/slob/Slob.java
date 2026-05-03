@@ -622,12 +622,16 @@ public final class Slob extends AbstractList<Slob.Blob> {
 
         private ByteBuffer getBinItem(int itemIndex, Compressor compressor) throws IOException {
             if (bin == null) {
-                long t0 = System.currentTimeMillis();
-                byte[] decompressed = compressor.decompress(this.compressedContent);
-                this.compressedContent = null;
-                L.fine("decompressed content in " + (System.currentTimeMillis() - t0));
-                L.fine("decompressed length: " + decompressed.length);
-                bin = new Bin(decompressed, this.contentTypeIds.length);
+                if (compressor != null) {
+                    long t0 = System.currentTimeMillis();
+                    byte[] decompressed = compressor.decompress(this.compressedContent);
+                    this.compressedContent = null;
+                    L.fine("decompressed content in " + (System.currentTimeMillis() - t0));
+                    L.fine("decompressed length: " + decompressed.length);
+                    bin = new Bin(decompressed, this.contentTypeIds.length);
+                } else {
+                    bin = new Bin(this.compressedContent, this.contentTypeIds.length);
+                }
             }
             return bin.get(itemIndex);
         }
